@@ -1,0 +1,168 @@
+﻿<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ output extension=".cs" #>
+// 
+// Runner - © Copyright diub - Dipl.-Ing. Uwe Barth - 2019-03-03
+// 
+// Allows you to start almost any function directly in its own thread and retrieve the result synchronized later.
+//
+using System;
+using System.Threading;
+
+namespace diub.Threads {
+
+	/// <summary>
+	/// Erlaubt es nahezu beliebige Funktionen direkt in einem eigenen Thread zu starten und das Ergebnis später
+	/// synchronisiert abzurufen.
+	/// </summary>
+	public partial class Runner {
+
+		/// <summary>
+		/// Synchronization Object for Action.
+		/// </summary>	
+		public class Run {
+			protected Thread thread;
+			protected bool completed = false;
+
+			public void Wait (){
+				if (!completed) {
+					if (thread == null)
+						throw new Exception ("Thread is not created (null)!");
+					if(	thread.ThreadState == ThreadState.Unstarted)
+						throw new Exception ("Thread is not runned!");
+					try {
+						thread.Join ();
+					} catch (Exception) {}
+					completed = true;
+				}
+			}
+		}	//	Run
+
+		/// <summary>
+		/// Synchronization Object for Func and getting the result.
+		/// </summary>	
+		public class Run<RT> : Run {
+			protected RT return_value;
+
+			public RT Result {
+				get {
+					Wait ();
+					return return_value;
+				}
+			}
+		}	//	Run
+
+		// Action; syntactic special case, since no parameter
+		private class RunAction : Run {		
+			private Action action;
+
+			public Run Start (Action Action) {
+				action = Action;
+				thread = new Thread (DoIt);
+				thread.Start ();
+				return this;
+			}
+
+			private void DoIt () {
+				action ();
+			}
+		}   // Action
+
+		// Static Action for easy and safe call
+		static public Run Action(Action Action) {
+			return (new RunAction()).Start(Action);
+		}	
+
+		// Function; syntactic special case, since no parameter
+		private class RunFunc<RT> : Run<RT>  {		
+			private Func<RT> function;
+
+			public Run<RT> Start (Func<RT> Function) {
+				function = Function;
+				thread = new Thread (DoIt);
+				thread.Start ();
+				return this;
+			}
+
+			private void DoIt () {
+				return_value = function ();
+			}
+		}   // Function
+
+		// Static Function for easy and safe call
+		static public Run<RT> Func<RT>(Func<RT> Function) {
+			return (new RunFunc<RT>()).Start(Function);
+		}
+	
+	<#
+		string cl = "";
+		string clt = "";
+		string ins = "";
+		string vars = "";
+		string svars = "";
+
+		for (int i = 0; i<16; i++) {
+			cl += "In" + i.ToString() + ",";
+			clt = cl.Trim(',');
+			ins += ", In" + i.ToString() + " Inv" + i.ToString(); 
+			vars += "inv" + i.ToString() + ",";
+			svars += "Inv" + i.ToString() + ",";
+	#>
+	// Action with <#=(i+1).ToString()#> parameter(s)
+		private class RunAction<<#=clt#>> : Run {
+			private Action<<#=clt#>> function;
+	<#for (int n=0; n<=i; n++) {#>
+		In<#=n#> inv<#=n#>;
+	<#}#>
+
+			public Run Start (Action<<#=clt#>> Function <#=ins#>) {
+				function = Function;
+		<#for (int n=0; n<=i; n++) {#>
+		inv<#=n#> = Inv<#=n#>;
+		<#}#>
+		(thread = new Thread (DoIt)).Start();
+				return this;		
+			}
+		
+			public void DoIt () {
+				function (<#=vars.TrimEnd(',')#>);
+			}
+		}	// Action
+
+		// Static Action for easy and safe call
+		static public Run Action<<#=cl.TrimEnd(',')#>>(Action<<#=cl.TrimEnd(',')#>> Function<#=ins#>) {
+			return (new RunAction<<#=cl.TrimEnd(',')#>>()).Start(Function,<#=svars.TrimEnd(',')#>);
+		}
+	
+		// Function with <#=(i+1).ToString()#> parameter(s)
+		private class RunFunc<<#=cl#>RT> : Run<RT> {
+			private Func<<#=cl#>RT> function;
+	<#for (int n=0; n<=i; n++) {#>
+		In<#=n#> inv<#=n#>;
+	<#}#>
+
+			public Run<RT> Start (Func<<#=cl#>RT> Function<#=ins#>) {
+				function = Function;
+		<#for (int n=0; n<=i; n++) {#>
+		inv<#=n#> = Inv<#=n#>;
+		<#}#>
+		(thread = new Thread (DoIt)).Start();
+				return this;		
+			}
+		
+			private void DoIt () {
+				return_value = function (<#=vars.TrimEnd(',')#>);
+			}
+		}	// Function 
+
+		// Static Function for easy and safe call
+		static public Run<RT> Func<<#=cl#>RT>(Func<<#=cl#>RT> Function<#=ins#>) {
+			return (new RunFunc<<#=cl#>RT>()).Start(Function, <#=svars.TrimEnd(',')#>);
+		}
+	
+	<#
+		}
+	#>
+}
+}	//	namespace	2019-03-01 - 16.30.38
