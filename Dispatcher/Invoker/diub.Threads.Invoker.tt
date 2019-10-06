@@ -1,0 +1,197 @@
+﻿<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ output extension=".cs" #>
+// 
+// Run - © Copyright diub - Dipl.-Ing. Uwe Barth - 2019-04-24
+// 
+// This part allows you to invoke almost any method/function directly in its own thread.
+//
+
+// ActionInvoke / FunctionInvoke: classic Invoke
+// GenericActionInvoke / GenericFuncInvoke: Invoke a Generic Function → class.Func<T>(...) 
+//
+// RunActionInvoke / RunFunktionInvoke: asynchronous Invoke of a function from a newly created thread
+// RunGenericActionInvoke / RunGenericFuncInvoke: asynchronous Invoke of a generic function from a newly created thread
+
+using System;
+using System.Threading;
+using System.Reflection;
+using System.Windows.Forms;
+
+namespace diub.Threads {
+
+	/// <summary>
+	/// This static class allows you to invoke almost any method/function directly in its own thread.
+	/// Supports also invoking static functions. 
+	/// </summary>
+	static public partial class Invoker {
+
+		// for static functions
+		static public void ActionInvoke (Type ClassType, String ActionName) {
+			ClassType.GetMethod (ActionName).Invoke (null, null);
+		}
+
+		static public void ActionInvoke (Object Instance, String ActionName) {
+			Instance.GetType ().GetMethod (ActionName).Invoke (Instance, null);
+		}
+
+		static public void ActionInvoke (this Control Ctrl, String ActionName) {
+			Ctrl.Invoke (Delegate.CreateDelegate (typeof (Action), Ctrl, ActionName));
+		}
+
+		static public Run RunActionInvoke (this Control Ctrl, String ActionName) {
+			return new RunAction<Control,String> (ActionInvoke, Ctrl, ActionName);
+		}
+
+		// for static functions
+		static public RT FuncInvoke<RT> (Type ClassType, String FunctionName) {
+			return (RT)	ClassType.GetMethod (FunctionName).Invoke (null, null);
+		}
+
+		static public RT FuncInvoke<RT> (Object Instance, String ActionName) {
+			return (RT)	Instance.GetType ().GetMethod (ActionName).Invoke (Instance, null);
+		}
+
+		static public RT FuncInvoke<RT> (this Control Ctrl, String FunctionName) {
+			return (RT) Ctrl.Invoke (Delegate.CreateDelegate (typeof (Func<RT>), Ctrl, Ctrl.GetType ().GetMethod (FunctionName)));
+		}
+
+		static public Run<RT> RunFuncInvoke<RT> (this Control Ctrl, String FunctionName) {
+			return (Run<RT>) new RunFunc<Control,String,RT> (FuncInvoke<RT>, Ctrl, FunctionName);
+		}
+
+		static public RT GenericFuncInvoke<RT> (this Control Ctrl, String FunctionName) {
+		// The following is only theoretically possible, since no unique signature exists without parameter types.
+		/*
+			MethodInfo mi = Ctrl.GetType ().GetMethod (FunctionName).MakeGenericMethod  ( null);
+			return (RT)	mi.Invoke (Ctrl, null);
+		*/
+
+			Delegate d;
+			MethodInfo mi;
+
+			mi = Ctrl.GetType ().GetMethod (FunctionName);
+			mi = mi.MakeGenericMethod (typeof (RT));
+			d = Delegate.CreateDelegate (typeof (Func<RT>), Ctrl, mi);
+			return (RT) Ctrl.Invoke (d);
+		}
+
+		static public Run<RT> RunGenericFuncInvoke<RT> (this Control Ctrl, String FunctionName) {
+			return (Run<RT>) new RunFunc<Control,String,RT> (GenericFuncInvoke<RT>, Ctrl, FunctionName);
+		}
+		
+<#
+	string cl = "";
+	string clt = "";
+	string ins = "";
+	string inst = "";
+	string vars = "";
+	string svars = "";
+	string tvars = "";
+
+	for (int i = 0; i<13; i++) {
+		cl += "In" + i.ToString() + ",";
+		clt = cl.Trim(',');
+		ins = (ins + ", In" + i.ToString() + " Inv" + i.ToString()).Trim(','); 
+		vars += "inv" + i.ToString() + ",";
+		svars = (svars + ", " + "Inv" + i.ToString()).Trim(','); 
+		tvars = (tvars + ", " + "typeof(In" + i.ToString()+")").Trim(','); 
+#>
+		//
+		// <#=(i+1).ToString()#> Parameter/s
+		//
+
+		/// <summary>
+		/// Invoke static function
+		/// </summary>		
+		static public void ActionInvoke<<#=clt#>> (Type ClassType, String ActionName,<#=ins#>) {
+			ClassType.GetMethod (ActionName).Invoke (null, new object [] {<#=svars#>});
+		}
+
+		/// <summary>
+		/// Invoke instance function
+		/// </summary>		
+		static public void ActionInvoke<<#=clt#>> (object Instance, String ActionName,<#=ins#>) {
+			Instance.GetType ().GetMethod (ActionName).Invoke (Instance, new object [] {<#=svars#>});
+		}
+
+		/// <summary>
+		/// Invoke controls function
+		/// </summary>		
+		static public void ActionInvoke<<#=clt#>> (this Control Ctrl, String ActionName,<#=ins#>) {
+			Ctrl.Invoke (Delegate.CreateDelegate (typeof (Action<<#=clt#>>), Ctrl, ActionName),<#=svars#>);
+		}
+
+		/// <summary>
+		/// Invoke controls function asynchronously
+		/// </summary>		
+		static public Run RunActionInvoke<<#=clt#>> (this Control Ctrl, String ActionName,<#=ins#>) {
+			return new RunAction<Control,String,<#=clt#>> (ActionInvoke<<#=clt#>>, Ctrl, ActionName,<#=svars#>);
+		}
+
+		/// <summary>
+		/// Invoke generic control function
+		/// </summary>		
+		static public void GenericActionInvoke<<#=clt#>> (this Control Ctrl, String ActionName,<#=ins#>) {
+			MethodInfo mi = Ctrl.GetType ().GetMethod (ActionName).MakeGenericMethod  (<#=tvars#>);
+			mi.Invoke (Ctrl, new object[] {<#=svars#>});
+		}
+
+		/// <summary>
+		/// Invoke generic control function asynchronously
+		/// </summary>		
+		static public Run RunGenericActionInvoke<<#=clt#>> (this Control Ctrl, String ActionName,<#=ins#>) {
+			return new RunAction<Control,String,<#=clt#>> (GenericActionInvoke<<#=clt#>>, Ctrl, ActionName,<#=svars#>);
+		}
+
+		/// <summary>
+		/// Invoke static function
+		/// </summary>		
+		static public RT FuncInvoke<<#=clt#>, RT> (Type ClassType, String FunctionName,<#=ins#>) {
+			return (RT)	ClassType.GetMethod (FunctionName).Invoke (null, new object [] {<#=svars#>});
+		}
+
+		/// <summary>
+		/// Invoke instance function
+		/// </summary>		
+		static public RT FuncInvoke<<#=clt#>, RT> (object Instance, String FunctionName,<#=ins#>) {
+			return (RT)	Instance.GetType ().GetMethod (FunctionName).Invoke (Instance, new object [] {<#=svars#>});
+		}
+	
+		/// <summary>
+		/// Invoke Controls function
+		/// </summary>		
+		static public RT FuncInvoke<<#=clt#>, RT> (this Control Ctrl, String FunctionName,<#=ins#>) {
+			return (RT) Ctrl.Invoke (Delegate.CreateDelegate (typeof (Func<<#=clt#>,RT>), Ctrl, Ctrl.GetType ().GetMethod (FunctionName)),<#=svars#>);
+		}
+
+		/// <summary>
+		/// Invoke controls function asynchronously
+		/// </summary>		
+		static public Run<RT> RunFuncInvoke<<#=clt#>, RT> (this Control Ctrl, String FunctionName,<#=ins#>) {
+			return (Run<RT>) new RunFunc<Control,String,<#=clt#>,RT> (FuncInvoke<<#=clt#>, RT>, Ctrl, FunctionName,<#=svars#>);
+		}
+
+		/// <summary>
+		/// Invoke generic controls function 
+		/// </summary>		
+		static public RT GenericFuncInvoke<<#=clt#>,RT> (this Control Ctrl, String ActionName,<#=ins#>) {
+			MethodInfo mi = Ctrl.GetType ().GetMethod (ActionName).MakeGenericMethod  (<#=tvars#>);
+			return (RT)	mi.Invoke (Ctrl, new object[] {<#=svars#>});
+		}
+
+		/// <summary>
+		/// Invoke genric controls function asynchronously
+		/// </summary>		
+		static public Run<RT> RunGenericFuncInvoke<<#=clt#>, RT> (this Control Ctrl, String FunctionName,<#=ins#>) {
+			return (Run<RT>) new RunFunc<Control,String,<#=clt#>,RT> (GenericFuncInvoke<<#=clt#>, RT>, Ctrl, FunctionName,<#=svars#>);
+		}
+
+<#
+	}	// Schleifenende
+#>
+
+	}	// class
+
+}	//	namespace	2019-04-24 - 13.36.14
