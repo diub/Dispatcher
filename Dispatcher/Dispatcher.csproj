@@ -63,6 +63,7 @@
     <Compile Include="Run\_ThreadsTest.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Documentation\ReadMe.txt" />
     <Content Include="Invoker\diub.Threads.Invoker.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>diub.Threads.Invoker.cs</LastGenOutput>
