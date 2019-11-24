@@ -1057,7 +1057,7 @@ namespace diub.Threads {
 			inv9 = Inv9;
 			inv10 = Inv10;
 			inv11 = Inv11;
-			inv12 = Inv12;
+			inv12 = Inv12;	
 			inv13 = Inv13;
 			inv14 = Inv14;
 			inv15 = Inv15;
