@@ -19,14 +19,14 @@ namespace diub.Threads {
 
 		// Runner works fine
 		static public void RunnerFunctions () {
-			List<Runner.Run<string>> runs;
+			List<Run<string>> runs;
 			List<string> results;
 
-			runs = new List<Runner.Run<string>> ();
+			runs = new List<Run<string>> ();
 			results = new List<string> ();
 			for (int i = 0; i < 256; i++)
 				runs.Add (Runner.Func<int, string> (TestFunction, i));
-			foreach (Runner.Run<string> run in runs)
+			foreach (Run<string> run in runs)
 				results.Add (run.Result);
 		}
 
@@ -39,7 +39,7 @@ namespace diub.Threads {
 			runs = new List<Run<string>> ();
 			results = new List<string> ();
 			for (int i = 0; i < 256; i++)
-				runs.Add (new RunFunc<int, string> (TestFunction, i));
+				runs.Add (Runner.Func<int, string> (TestFunction, i));
 			foreach (Run<string> run in runs)
 				results.Add (run.Result);
 		}
@@ -54,17 +54,17 @@ namespace diub.Threads {
 			}
 		}
 
-		
+
 		// Runner works fine
 		static public void RunnerActions () {
-			List<Runner.Run> runs;
+			List<Run> runs;
 			Dictionary<int, string> results;
 
-			runs = new List<Runner.Run> ();
+			runs = new List<Run> ();
 			results = new Dictionary<int, string> ();
 			for (int i = 0; i < 256; i++)
 				runs.Add (Runner.Action<int, Dictionary<int, string>> (TestAction, i, results));
-			foreach (Runner.Run run in runs)
+			foreach (Run run in runs)
 				run.Wait ();
 		}
 
@@ -76,7 +76,7 @@ namespace diub.Threads {
 			runs = new List<Run> ();
 			results = new Dictionary<int, string> ();
 			for (int i = 0; i < 256; i++)
-				runs.Add (new RunAction<int, Dictionary<int, string>> (TestAction, i, results));
+				runs.Add (Runner.Action<int, Dictionary<int, string>> (TestAction, i, results));
 			foreach (Run run in runs)
 				run.Wait ();
 		}
