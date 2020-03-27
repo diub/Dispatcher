@@ -1,0 +1,63 @@
+﻿<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ output extension=".cs" #>
+
+using System;
+using System.Collections.Generic;
+using System.Text;
+using System.Threading.Tasks;
+
+using Id = System.Int64;
+
+namespace diub.Unmanaged {
+
+	static public partial class Copy {
+	<#
+	string [] types = new string [] {"SByte", "Byte", "Int16", "UInt16", "Int32", "UInt32", "Int64", "UInt64", "Char", "float", "double", "decimal","bool"};
+
+	string [] utypes = new string [] {"SByte", "Byte", "Int16", "UInt16", "Int32", "UInt32", "Int64", "UInt64", "Char", "Boolean"};
+
+
+	string UC;
+#>
+<#
+    foreach (string item in types) {
+		UC = Char.ToUpper(item[0]) + item.Substring (1);
+#>
+	
+		/// <summary>
+		/// Kopiert die Werte einzeln via *ptr++.
+		/// </summary>
+		/// <param name="Source"></param>
+		/// <param name="Target"></param>
+		/// <param name="Length"></param>
+		unsafe static public void Copy<#=UC#>s (<#=item#>* Source, <#=item#>* Target, int Length) {
+			for (int i = 0; i < Length; i++) {
+				*Target = *Source;		// 
+				Source++;
+				Target++;
+			}
+		}
+
+		/// <summary>
+		/// Kopiert die Werte auf Basis von "Int32 *ptr". Ein "Length alignment mismatch" wird ausgeglichen.
+		/// </summary>
+		/// <param name="Source">Quell-Array.</param>
+		/// <param name="SourceStart">Startpunkt innerhalb des Quell-Array.</param>
+		/// <param name="Target">Ziel-Array.</param>
+		/// <param name="TargetStart">Startpunkt innerhalb des Ziel-Array.</param>
+		/// <param name="Length">Anzahl der zu kopierenden Elemente.</param>
+		/// <returns>True: falls vollständig gleich; sonst False.</returns>
+		unsafe static public void Copy<#=UC#>s (this <#=item#> [] Source, Int32 SourceStart, <#=item#> [] Target, Int32 TargetStart, Int32 Length) {
+			CopyUnmanaged<<#=item#>> (Source, SourceStart, Target, TargetStart, Length);
+		}
+<#
+	}
+#>
+
+	}	// class
+
+}	//	namespace	2020-02-20 - 18.15.23

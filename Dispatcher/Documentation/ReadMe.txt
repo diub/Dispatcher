@@ -1,17 +1,35 @@
-﻿Dispatcher
+﻿dispatcher
 ==========
 
-Eine Sammlung von Verteilern bzw. Händlern für Datentypen und Funktionen aller Art.
+A collection of distributors or dealers for data types and functions of all kinds.
 
-C# erfordert immer wieder Verteiler bzw. Händler für Datentypen aber auch Funktionen ala Func<...> .
-Diese Bibliothek sammelt unterschiedliche Verteiler mit den folgenden Zielen:
+C# always requires distribution lists or Dealer for data types but also functions ala Func<...> .
+This library collects different mailing lists with the following goals:
 
-- Einfachheit
-  Beispiel: die Klasse 'Run' gegenüber 'async'.
+- straightforwardness
+  Example: the class 'Run' opposite 'async'.
 
-- Einheitlichkeit
-  Beispiel: ein korrekt arbeitender 'Invoke'-Aufruf unterscheidet sich teilweise deutlich bei parameterlosen generischen Funktionen.
+- uniformity
+  Example: a correctly working 'Invoke' call sometimes differs significantly from parameterless generic functions.
 
-- Effizienz
-  für den Entwickler.
+- effectiveness
+  for the developer.
+
+
+Dispatcher
+==========
+
+A collection of distributors or dealers for data types and functions of all kinds.
+
+C# always requires distribution lists or Dealer for data types but also functions ala Func<...> .
+This library collects different mailing lists with the following goals:
+
+- straightforwardness
+  Example: the class 'Run' opposite 'async'.
+
+- uniformity
+  Example: a correctly working 'Invoke' call sometimes differs significantly from parameterless generic functions.
+
+- effectiveness
+  for the developer.
 

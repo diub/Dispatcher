@@ -1,0 +1,76 @@
+﻿<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ output extension=".cs" #>
+
+using System;
+using System.Collections.Generic;
+using System.Text;
+using System.Threading.Tasks;
+
+using Id = System.Int64;
+
+namespace diub.Unmanaged {
+
+	static public partial class Copy {
+	<#
+	string [] types = new string [] {"SByte", "Byte", "Int16", "UInt16", "Int32", "UInt32", "Int64", "UInt64", "Char", "float", "double", "decimal","bool"};
+
+	string [] utypes = new string [] {"SByte", "Byte", "Int16", "UInt16", "Int32", "UInt32", "Int64", "UInt64", "Char", "Boolean"};
+
+
+	string UC;
+#>
+<#
+    foreach (string item in types) {
+		UC = Char.ToUpper(item[0]) + item.Substring (1);
+#>
+		 
+		/// <summary>
+		/// Liefert den Wert von der angegebenen Stelle im Byte-Array.
+		/// </summary>
+		/// <param name="Array"></param>
+		/// <param name="Offset"></param>
+		unsafe static public <#=item#> Copy<#=UC#> (this byte [] Array, Int32 Offset) {
+			fixed (byte* ptr = Array) {
+				<#=item#>* vp<#=item#> = (<#=item#>*) (ptr + Offset);
+				return *vp<#=item#>;
+			}
+		}
+
+		/// <summary>
+		/// Liefert den Wert von der angegebenen Stelle im Byte-Array.
+		/// </summary>
+		/// <param name="Array"></param>
+		/// <param name="Offset">Position, ab der geschrieben wird. Erhöht sich um die Anzhal der gelesenen Bytes!</param>
+		unsafe static public <#=item#> Copy<#=UC#> (this byte [] Array, ref Int32 Offset) {
+			try{
+				fixed (byte* ptr = Array) {
+					<#=item#>* vp<#=item#> = (<#=item#>*) (ptr + Offset);
+					return *vp<#=item#>;
+				}
+			} finally {
+				Offset += sizeof(<#=item#>);
+			}
+		}
+
+		/// <summary>
+		/// Liefert den Wert (und neuen Offset) von der angegebenen Stelle im Byte-Array.
+		/// </summary>
+		/// <param name="Array"></param>
+		/// <param name="Offset">Position, ab der gelesen wird.</param>
+		unsafe static public (<#=item#>, Int32) Copy<#=UC#>Offset (this byte [] Array, Int32 Offset) {
+			fixed (byte* ptr = Array) {
+				<#=item#>* vp<#=item#> = (<#=item#>*) (ptr + Offset);
+				return (*vp<#=item#>, Offset + sizeof(<#=item#>));
+			}
+		}
+<#
+	}
+#>
+
+	}	// class
+
+}	//	namespace	2020-02-20 - 18.15.23

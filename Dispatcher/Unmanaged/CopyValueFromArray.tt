@@ -1,0 +1,86 @@
+﻿<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ output extension=".cs" #>
+
+using System;
+using System.Collections.Generic;
+using System.Text;
+using System.Threading.Tasks;
+
+using Id = System.Int64;
+
+namespace diub.Unmanaged {
+
+	static public partial class Copy {
+
+	<#
+	string [] types = new string [] {"SByte", "Byte", "Int16", "UInt16", "Int32", "UInt32", "Int64", "UInt64", "Char", "float", "double", "decimal","bool"};
+
+	string [] utypes = new string [] {"SByte", "Byte", "Int16", "UInt16", "Int32", "UInt32", "Int64", "UInt64", "Char", "Boolean"};
+
+
+	string UC;
+#>
+
+		/// <summary>
+		/// Liefert die Bytes ab der Stelle <paramref name="Offset"/> als Wert.
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		/// <param name="Array"></param>
+		/// <param name="Offset"></param>
+		/// <returns></returns>
+		unsafe static public dynamic CopyValue<T> (this byte [] Array, Int32 Offset) where T : unmanaged {
+			fixed (byte* ptr = Array) {
+				switch (Type.GetTypeCode (typeof (T))) {
+<#
+    foreach (string item in utypes) {
+		UC = Char.ToUpper(item[0]) + item.Substring (1);
+#>	
+					case TypeCode.<#=item#>:
+						<#=item#>* vp<#=item#> = (<#=item#>*) (ptr + Offset);
+						return *vp<#=item#>;
+<#
+	}
+#>
+				}
+			}
+			throw new Exception ("Not implemented!");
+		}
+
+
+		/// <summary>
+		/// Liefert die Bytes ab der Stelle <paramref name="Offset"/> als Wert.
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		/// <param name="Array"></param>
+		/// <param name="Offset">Position, ab der gelesen wird. Erhöht sich um die Anzhal der gelesenen Bytes!</param>
+		/// <returns></returns>
+		unsafe static public dynamic CopyValue<T> (this byte [] Array, ref Int32 Offset) where T : unmanaged {
+			try {
+				fixed (byte* ptr = Array) {
+					switch (Type.GetTypeCode (typeof (T))) {
+<#
+    foreach (string item in utypes) {
+		UC = Char.ToUpper(item[0]) + item.Substring (1);
+#>	
+						case TypeCode.<#=item#>:
+							<#=item#>* vp<#=item#> = (<#=item#>*) (ptr + Offset);
+							return *vp<#=item#>;
+<#
+	}
+#>
+					}
+				}
+			} finally {
+				Offset += sizeof(T);
+			}
+			throw new Exception ("Not implemented!");
+		}
+
+
+	}	// class
+
+}	//	namespace	2020-02-20 - 18.15.23

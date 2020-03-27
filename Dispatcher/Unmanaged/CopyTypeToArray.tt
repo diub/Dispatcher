@@ -1,0 +1,64 @@
+﻿<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ output extension=".cs" #>
+
+using System;
+using System.Collections.Generic;
+using System.Text;
+using System.Threading.Tasks;
+
+using Id = System.Int64;
+
+namespace diub.Unmanaged {
+
+	static public partial class Copy {
+<#
+	string [] types = new string [] {"SByte", "Byte", "Int16", "UInt16", "Int32", "UInt32", "Int64", "UInt64", "Char", "float", "double", "decimal","bool"};
+
+	string [] utypes = new string [] {"SByte", "Byte", "Int16", "UInt16", "Int32", "UInt32", "Int64", "UInt64", "Char", "Boolean"};
+
+	string UC;
+#>
+<#
+    foreach (string item in types) {
+		UC = Char.ToUpper(item[0]) + item.Substring (1);
+#>
+
+		/// <summary>
+		/// Kopiert den Wert an die angegebene Stelle in das Byte-Array und liefert den neuen Offset zurück.
+		/// </summary>
+		/// <param name="Array"></param>
+		/// <param name="Offset"></param>
+		/// <param name="Value"></param>
+		/// <returns>Liefert den neuen Offset.</returns>
+		unsafe static public Int32 Copy<#=UC#> (this byte [] Array, Int32 Offset, <#=item#> Value) {
+			fixed (byte* ptr = Array) {
+				<#=item#>* vp = (<#=item#>*) (ptr + Offset);
+				*vp = Value;
+			}
+			return Offset + sizeof(<#=item#>);
+		}
+
+		/// <summary>
+		/// Kopiert den Wert an die angegebene Stelle in das Byte-Array.
+		/// </summary>
+		/// <param name="Array"></param>
+		/// <param name="Offset">Position, ab der geschrieben wird. Erhöht sich um die Anzhal der gelesenen Bytes!</param>
+		/// <param name="Value"></param>		
+		unsafe static public void Copy<#=UC#> (this byte [] Array, ref Int32 Offset, <#=item#> Value) {
+			fixed (byte* ptr = Array) {
+				<#=item#>* vp = (<#=item#>*) (ptr + Offset);
+				*vp = Value;
+				Offset += sizeof(<#=item#>);
+			}
+		}
+<#
+	}
+#>
+
+	}	// class
+
+}	//	namespace	2020-02-20 - 18.15.23

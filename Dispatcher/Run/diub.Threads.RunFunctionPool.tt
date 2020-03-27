@@ -1,0 +1,150 @@
+﻿<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ output extension=".cs" #>
+// 
+// Run - © Copyright diub - Dipl.-Ing. Uwe Barth - 2019-03-03
+// 
+// Erlaubt das Anlegen von Thread-Pools für fast alle Funktionen, auch mit Parametern!
+// Bei Hinzufügen eines neuen Parametersatzes wird automatisch ein Thread dafür freigegeben.
+//
+//
+
+using System;
+using System.Collections.Generic;
+using System.Threading;
+
+namespace diub.Threads {
+
+	/// <summary>
+	/// Basis-Klasse mit grundelegenden Elementen. 
+	/// </summary>	
+	public abstract class RunPoolBase<RT> : RunPoolBase {
+		
+		protected List<RT> return_values = new List<RT> ();
+
+		public RT PopReturnValue() {
+			RT value;
+
+			lock(return_values) {
+				value = return_values [0];
+				return_values.RemoveAt (0);
+			}
+			return value;
+		}
+
+		public List<RT> Values {
+			get {
+				return return_values;
+			}
+		}
+
+	}
+
+<#
+	string cl = "";
+	string clt = "";
+	string ins = "";
+	string inst = "";
+	string vars = "";
+	string svars = "";
+	string tvars = "";
+	String pinvs = "";
+
+	for (int i = 0; i<13; i++) {
+		cl += "In" + i.ToString() + ",";
+		clt = cl.Trim(',');
+		ins = (ins + ", In" + i.ToString() + " Inv" + i.ToString()).Trim(','); 
+		vars += "inv" + i.ToString() + ",";
+		svars = (svars + ", " + "Inv" + i.ToString()).Trim(','); 
+		tvars = (tvars + ", " + "typeof(In" + i.ToString()+")").Trim(','); 
+#>
+
+	public class RunFuncPool<<#=clt#>,RT> : RunPoolBase<RT> {
+		public delegate RT FunctionDelegate (<#=ins#>);
+		private FunctionDelegate function ;
+
+		private struct Parameters {
+<#for (int n=0; n<=i; n++) {#>
+			public In<#=n#> inv<#=n#>;
+<#}#>
+		}
+
+		private List<Parameters> parameters = new List<Parameters>();
+
+		public RunFuncPool (FunctionDelegate Function, int MaxConcurrentWorkers = 4, int PoolSize = 0) {
+			List<Thread> threads;
+
+			threads = new List<Thread> ();
+			completed = new Semaphore (1, 1);
+			function = Function;
+			if(PoolSize == 0)
+				PoolSize = MaxConcurrentWorkers * 2;
+			pool_handler = new Semaphore (PoolSize, PoolSize);
+			for (int i = 0; i < MaxConcurrentWorkers; i++) 
+				threads.Add (new Thread (Loop));
+			thread_handler = new ThreadPoolHandler (threads);
+			thread_handler.StartThreads ();
+		}
+
+		protected void Loop () {
+			Parameters par;
+
+			do {
+				thread_handler.Wait ();
+				if (disposing)
+					return;
+				lock (parameters) {
+					par = parameters [0];
+					parameters.RemoveAt (0);
+					pool_handler.Release ();
+				}
+				DoIt (par);
+				lock (parameters) {
+					todo--;
+					thread_handler.Done ();
+					if (todo == 0)
+						completed.Release ();
+				}
+			} while (!disposing);
+		}
+
+		protected virtual void DoIt (Object Vars) {
+			Parameters par = (Parameters) Vars;
+			RT return_value;
+<#
+	pinvs = "";
+	for (int n=0; n<=i; n++) 
+		pinvs = (pinvs + ", " + "par.inv"+ n.ToString()).Trim(','); 	
+#>
+		
+			return_value = function (<#=pinvs#>);
+			lock (return_values)
+				return_values.Add(return_value);
+		}
+
+		public void Add (<#=ins#>) {
+			Parameters add_parameters;
+
+<#
+	pinvs = "";
+	for (int n=0; n<=i; n++) 
+		pinvs = (pinvs + ", " + "inv"+ n.ToString()+"=Inv" + n.ToString()).Trim(','); 	
+#>
+			add_parameters = new Parameters () {<#=pinvs#>};
+			pool_handler.WaitOne ();
+			lock (parameters) {
+				if (todo == 0)
+					completed.WaitOne ();
+				todo++;
+				parameters.Add (add_parameters);
+				thread_handler.Request ();
+			}
+		}
+
+
+	}	// class
+<#
+	}
+#>
+}	//	namespace	2019-05-02 - 12.17.20
