@@ -1,0 +1,61 @@
+﻿<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ output extension=".cs" #>
+// 
+// Run - © Copyright diub - Dipl.-Ing. Uwe Barth - 2019-03-03
+// 
+// Allows you to start almost any function directly in its own thread and retrieve the result synchronized later.
+//
+using diub.Threads;
+using System;
+using System.Threading;
+
+namespace diub.Threads {
+
+/// <summary>
+/// Erlaubt es nahezu beliebige Funktionen direkt in einem eigenen Thread zu starten und das Ergebnis später
+/// synchronisiert abzurufen.
+/// </summary>
+
+
+<#
+	string cl = "";
+	string clt = "";
+	string ins = "";
+	string vars = "";
+	string svars = "";
+
+	for (int i = 0; i < 16; i++) {
+		cl += "In" + i.ToString() + ",";
+		clt = cl.Trim(',');
+		ins += ", In" + i.ToString() + " Inv" + i.ToString(); 
+		ins = ins.Trim(' ', ',');
+		vars += "inv" + i.ToString() + ",";
+		svars += "Inv" + i.ToString() + ",";
+#>
+	// Action with <#=(i+1).ToString()#> parameter(s)
+	public class DelayedRunAction<<#=clt#>> : DelayedRun {
+		private Action<<#=clt#>> action;
+	<#for (int n=0; n<=i; n++) {#>
+	private In<#=n#> inv<#=n#>;
+	<#}#>
+
+		public DelayedRunAction (Action<<#=clt#>> Action, <#=ins#>) {
+			action = Action;
+	<#for (int n=0; n<=i; n++) {#>
+		inv<#=n#> = Inv<#=n#>;
+	<#}#>
+		thread = new Thread (DoIt);
+		}
+		
+		public void DoIt () {
+			action (<#=vars.TrimEnd(',')#>);
+		}
+	}	// Action
+
+<#
+	}	// for i
+#>
+
+}	//	namespace	2019-03-01 - 16.30.38

@@ -4,14 +4,16 @@
 <#@ output extension=".cs" #>
 // 
 // Runner - © Copyright diub - Dipl.-Ing. Uwe Barth - 2019-03-03
+// Updated: 2021-03-31
 // 
 // Allows you to start almost any function directly in its own thread and retrieve the result synchronized later.
 //
 using System;
 using System.Threading;
 
-namespace diub.Threads {
+using diub.Threads;
 
+namespace diub.Threads {
 		
 	/// <summary>
 	/// Erlaubt es nahezu beliebige Funktionen direkt in einem eigenen Thread zu starten und das Ergebnis später
@@ -19,48 +21,110 @@ namespace diub.Threads {
 	/// </summary>
 	public partial class Runner {
 
-		// Action: syntactic special case, since no parameter
-	
-		// Static Action for easy and safe call
+		/// <summary>
+		/// Action: syntactic special case, since no parameter.<para></para>
+		/// Static Action for easy and safe call
+		/// </summary>
 		static public Run Action(Action Action) {
 			return (new RunAction(Action));
 		}	
 
-		// Function; syntactic special case, since no parameter
+		/// <summary>
+		/// Action: syntactic special case, since no parameter.<para></para>
+		/// Static Action for easy and safe call
+		/// </summary>
+		static public DelayedRun DelayedAction(Action Action) {
+			return (new DelayedRunAction(Action));
+		}	
 
+		/// <summary>
+		/// Function; syntactic special case, since no parameter.<para></para>
 		// Static Function for easy and safe call
+		/// </summary>
 		static public Run<RT> Func<RT>(Func<RT> Function) {
 			return (new RunFunc<RT>(Function));
 		}
 	
-	<#
-		string cl = "";
-		string clt = "";
-		string ins = "";
-		string vars = "";
-		string svars = "";
-
-		for (int i = 0; i<16; i++) {
-			cl += "In" + i.ToString() + ",";
-			clt = cl.Trim(',');
-			ins += ", In" + i.ToString() + " Inv" + i.ToString(); 
-			vars += "inv" + i.ToString() + ",";
-			svars += "Inv" + i.ToString() + ",";
-	#>
-	// Action with <#=(i+1).ToString()#> parameter(s)
-		// Static Action for easy and safe call
-		static public Run Action<<#=cl.TrimEnd(',')#>>(Action<<#=cl.TrimEnd(',')#>> Function<#=ins#>) {
-			return (new RunAction<<#=cl.TrimEnd(',')#>>(Function,<#=svars.TrimEnd(',')#>));
-		}
-	
-		// Function with <#=(i+1).ToString()#> parameter(s)
+		/// <summary>
+		/// Function; syntactic special case, since no parameter.<para></para>
 		// Static Function for easy and safe call
-		static public Run<RT> Func<<#=cl#>RT>(Func<<#=cl#>RT> Function<#=ins#>) {
-			return (new RunFunc<<#=cl#>RT>(Function, <#=svars.TrimEnd(',')#>));
+		/// </summary>
+		static public DelayedRun<RT> DelayedFunc<RT>(Func<RT> Function) {
+			return (new DelayedRunFunc<RT>(Function));
+		}
+
+<#
+	string cl = "";
+	string clt = "";
+	string ins = "";
+	string vars = "";
+	string svars = "";
+	string ics;
+
+	for (int i = 0; i < 16; i++) {
+		cl += "In" + i.ToString() + ",";
+		clt = cl.Trim(',');
+		ins += ", In" + i.ToString() + " Inv" + i.ToString(); 
+		vars += "inv" + i.ToString() + ",";
+		svars += "Inv" + i.ToString() + ",";
+		ics = (i+1).ToString();
+#>
+		/// <summary>
+		/// Action with <#=ics#> parameter(s).<para></para>
+		/// Static Action for easy and safe call
+		/// </summary>
+		static public Run Action<<#=cl.TrimEnd(',')#>>(Action<<#=cl.TrimEnd(',')#>> Function<#=ins#>) {
+			return (new RunAction<<#=cl.TrimEnd(',')#>>(Function, <#=svars.TrimEnd(',')#>));
 		}
 	
-	<#
+		/// <summary>
+		/// Action with <#=ics#> parameter(s).<para></para>
+		/// Static Action for easy and safe call
+		/// </summary>
+		static public DelayedRun DelayedAction<<#=cl.TrimEnd(',')#>>(Action<<#=cl.TrimEnd(',')#>> Function<#=ins#>) {
+			return (new DelayedRunAction<<#=cl.TrimEnd(',')#>>(Function, <#=svars.TrimEnd(',')#>));
 		}
-	#>
+	
+		/// <summary>
+		/// Function with <#=ics#> parameter(s).<para></para>
+		/// Static Function for easy and safe call
+		/// </summary>
+		static public Run<RT> Func<<#=cl#>RT>(Func<<#=cl#>RT> Function<#=ins#>) {
+			return new RunFunc<<#=cl#>RT>(Function, <#=svars.TrimEnd(',')#>);
+		}
+
+		/// <summary>
+		/// Function with <#=ics#> parameter(s).<para></para>
+		/// Static Function for easy and safe call
+		/// </summary>
+		static public DelayedRun<RT> DelayedFunc<<#=cl#>RT>(Func<<#=cl#>RT> Function<#=ins#>) {
+			return new DelayedRunFunc<<#=cl#>RT>(Function, <#=svars.TrimEnd(',')#>);
+		}
+<#
+	int rtcount = 16;
+	string rttypes = "RT0";
+	string rtcs = "";
+
+	for (int r = 1; r < rtcount; r++) {
+		rttypes = rttypes + ", RT" + r.ToString();
+		rttypes = rttypes.Trim (' ', ',');
+		rtcs = (r + 1).ToString();
+#>
+
+		/// <summary>
+		/// Function with <#=ics#> parameter(s)
+		/// and <#=rtcs#> return values.<para></para>
+		/// Static Function for easy and safe call
+		/// </summary>
+		static public Run<#=rtcs#><<#=rttypes#>> Func<#=rtcs#><<#=clt#>, <#=rttypes#>> (RunFunc<#=rtcs#><<#=clt#>, <#=rttypes#>>.RunDelegate Function<#=ins#>) {
+			return new RunFunc<#=rtcs#><<#=clt#>, <#=rttypes#>> (Function, <#=svars.TrimEnd(',')#>);
+		}
+<#
+	}
+#>
+	
+<#
+	}
+#>
 }
 }	//	namespace	2019-03-01 - 16.30.38

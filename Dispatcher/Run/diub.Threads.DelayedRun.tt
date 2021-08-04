@@ -1,0 +1,110 @@
+﻿<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ output extension=".cs" #>
+
+// 
+// Run - © Copyright diub - Dipl.-Ing. Uwe Barth - 2021-08-04
+// Updated: 2021-08-04
+// 
+// Allows you to start almost any function directly in its own thread and retrieve the result synchronized later.
+//
+using System;
+using System.Threading;
+
+namespace diub.Threads {
+
+/// <summary>
+/// Erlaubt es nahezu beliebige Funktionen direkt in einem eigenen Thread zu starten und das Ergebnis später
+/// synchronisiert abzurufen.
+/// </summary>
+
+	/// <summary>
+	/// Synchronization Object for Action.
+	/// </summary>	
+	public class DelayedRun : Run{
+		
+		public bool Start () {
+			try {
+				thread.Start ();
+				return true;
+			} catch(Exception) { 
+				return false;
+			}
+		}
+
+	}	//	Run
+
+
+	/// <summary>
+	/// Synchronization Object for Func and getting the result.
+	/// </summary>	
+	public class DelayedRun<RT> : DelayedRun {
+		protected RT return_value;
+
+		public RT Result {
+			get {
+				Wait ();
+				return return_value;
+			}
+		}
+	}	//	Run
+
+	// Action; syntactic special case, since no parameter
+	public class DelayedRunAction : DelayedRun {		
+		private Action action;
+
+		public DelayedRunAction (Action Action) {
+			action = Action;
+			thread = new Thread (DoIt);
+		}
+
+		private void DoIt () {
+			action ();
+		}
+	}   // Action
+
+	// Function; syntactic special case, since no parameter
+	public class DelayedRunFunc<RT> : DelayedRun<RT>  {		
+		private Func<RT> function;
+
+		public DelayedRunFunc (Func<RT> Function) {
+			function = Function;
+			thread = new Thread (DoIt);
+		}
+
+		private void DoIt () {
+			return_value = function ();
+		}
+	}   // Function
+
+<#
+	int rtcount = 16;
+	string rttypes = "RT0";
+	string rtcs = "";
+
+	for (int r = 1; r < rtcount; r++) {
+		rttypes = rttypes + ", RT" + r.ToString();
+		rttypes = rttypes.Trim (' ', ',');
+		rtcs = (r + 1).ToString();
+#>
+	/// <summary>
+	/// Synchronization Object for Func and getting the result.<para></para>
+	/// for <#=rtcs#> Return Values.
+	/// </summary>	
+	public class DelayedRun<#=rtcs#><<#=rttypes#>> : DelayedRun {
+		protected (<#=rttypes#>) return_value;
+
+		public (<#=rttypes#>) Result {
+			get {
+				Wait ();
+				return return_value;
+			}
+		}
+	}	//	Run
+
+<#
+	}
+#>
+
+}	//	namespace	2021-08-04 - 13.10.48

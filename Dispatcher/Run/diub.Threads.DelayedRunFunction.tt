@@ -1,0 +1,97 @@
+﻿
+<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ output extension=".cs" #>
+// 
+// Run - © Copyright diub - Dipl.-Ing. Uwe Barth - 2021-03-31
+// 
+// Allows you to start almost any function directly in its own thread and retrieve the result synchronized later.
+//
+using System;
+using System.Threading;
+
+namespace diub.Threads {
+
+/// <summary>
+/// Erlaubt es nahezu beliebige Funktionen direkt in einem eigenen Thread zu starten und das Ergebnis später
+/// synchronisiert abzurufen.
+/// </summary>
+
+<#
+	string cl = "";
+	string clt = "";
+	string ins = "";
+	string vars = "";
+	string svars = "";
+
+	for (int i = 0; i < 16; i++) {
+		cl += "In" + i.ToString() + ",";
+		clt = cl.Trim(',');
+		ins += ", In" + i.ToString() + " Inv" + i.ToString(); 
+		ins = ins.Trim(' ', ',');
+		vars += "inv" + i.ToString() + ",";
+		svars += "Inv" + i.ToString() + ",";
+#>
+
+	// Function with <#=(i+1).ToString()#> parameter(s)
+	public class DelayedRunFunc<<#=cl#>RT> : DelayedRun<RT> {
+		private Func<<#=cl#>RT> function;
+	<#for (int n=0; n<=i; n++) {#>
+	In<#=n#> inv<#=n#>;
+	<#}#>
+
+		public DelayedRunFunc (Func<<#=cl#>RT> Function, <#=ins#>) {
+			function = Function;
+	<#for (int n=0; n<=i; n++) {#>
+		inv<#=n#> = Inv<#=n#>;
+	<#}#>
+		thread = new Thread (DoIt);
+		}
+		
+		private void DoIt () {
+			return_value = function (<#=vars.TrimEnd(',')#>);
+		}
+	}	// Function 
+	
+<#
+	int rtcount = 16;
+	string rttypes = "RT0";
+	string rtcs = "";
+
+	for (int r = 1; r < rtcount; r++) {
+		rttypes = rttypes + ", RT" + r.ToString();
+		rttypes = rttypes.Trim (' ', ',');
+		rtcs = (r + 1).ToString();
+#>
+
+	// Function with <#=(i+1).ToString()#> parameter(s)<para></para>
+	// and <#=rtcs#> return values.
+	public class DelayedRunFunc<#=rtcs#><<#=clt#>, <#=rttypes#>> : DelayedRun<#=rtcs#><<#=rttypes#>> {
+		public delegate (<#=rttypes#>) RunDelegate (<#=ins#>);
+		private RunDelegate function;
+	<#for (int n=0; n<=i; n++) {#>
+	private In<#=n#> inv<#=n#>;
+	<#}#>
+
+		public DelayedRunFunc<#=rtcs#> (RunDelegate Action, <#=ins#>) {
+			function = Action;
+	<#for (int n=0; n<=i; n++) {#>
+		inv<#=n#> = Inv<#=n#>;
+	<#}#>
+		thread = new Thread (DoIt);
+		}
+		
+		public void DoIt () {
+			return_value = function (<#=vars.TrimEnd(',')#>);
+		}
+	}
+<#
+	}
+#>
+
+<#
+	}	// for i
+#>
+
+}	//	namespace	2019-03-01 - 16.30.38
